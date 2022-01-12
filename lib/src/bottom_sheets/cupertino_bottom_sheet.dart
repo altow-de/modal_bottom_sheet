@@ -174,6 +174,8 @@ class CupertinoModalBottomSheetRoute<T> extends ModalBottomSheetRoute<T> {
           duration: duration,
         );
 
+  double? _paddingTop;
+
   @override
   Widget buildTransitions(
     BuildContext context,
@@ -181,7 +183,10 @@ class CupertinoModalBottomSheetRoute<T> extends ModalBottomSheetRoute<T> {
     Animation<double> secondaryAnimation,
     Widget child,
   ) {
-    final paddingTop = MediaQuery.of(context).padding.top;
+    _paddingTop ??= MediaQuery.of(context).padding.top;
+
+    final paddingTop = _paddingTop!;
+
     final distanceWithScale = (paddingTop + _kPreviousPageVisibleOffset) * 0.9;
     final offsetY = secondaryAnimation.value * (paddingTop - distanceWithScale);
     final scale = 1 - secondaryAnimation.value / 10;
