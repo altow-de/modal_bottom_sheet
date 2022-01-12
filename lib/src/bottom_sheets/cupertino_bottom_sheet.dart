@@ -83,6 +83,7 @@ Future<T?> showCupertinoModalBottomSheet<T>({
   RouteSettings? settings,
   Color? transitionBackgroundColor,
   BoxShadow? shadow,
+  FilterQuality? filterQuality,
 }) async {
   assert(debugCheckHasMediaQuery(context));
   final hasMaterialLocalizations = Localizations.of<MaterialLocalizations>(context, MaterialLocalizations) != null;
@@ -90,30 +91,32 @@ Future<T?> showCupertinoModalBottomSheet<T>({
 
   final result = await Navigator.of(context, rootNavigator: useRootNavigator).push(
     CupertinoModalBottomSheetRoute<T>(
-        builder: builder,
-        containerBuilder: (context, _, child) => _CupertinoBottomSheetContainer(
-              child: child,
-              backgroundColor: backgroundColor,
-              topRadius: topRadius,
-              shadow: shadow,
-            ),
-        secondAnimationController: secondAnimation,
-        expanded: expand,
-        closeProgressThreshold: closeProgressThreshold,
-        barrierLabel: barrierLabel,
-        elevation: elevation,
-        bounce: bounce,
-        shape: shape,
-        clipBehavior: clipBehavior,
-        isDismissible: isDismissible ?? expand == false ? true : false,
-        modalBarrierColor: barrierColor ?? Colors.black12,
-        enableDrag: enableDrag,
+      builder: builder,
+      containerBuilder: (context, _, child) => _CupertinoBottomSheetContainer(
+        child: child,
+        backgroundColor: backgroundColor,
         topRadius: topRadius,
-        animationCurve: animationCurve,
-        previousRouteAnimationCurve: previousRouteAnimationCurve,
-        duration: duration,
-        settings: settings,
-        transitionBackgroundColor: transitionBackgroundColor ?? Colors.black),
+        shadow: shadow,
+      ),
+      secondAnimationController: secondAnimation,
+      expanded: expand,
+      closeProgressThreshold: closeProgressThreshold,
+      barrierLabel: barrierLabel,
+      elevation: elevation,
+      bounce: bounce,
+      shape: shape,
+      clipBehavior: clipBehavior,
+      isDismissible: isDismissible ?? expand == false ? true : false,
+      modalBarrierColor: barrierColor ?? Colors.black12,
+      enableDrag: enableDrag,
+      topRadius: topRadius,
+      animationCurve: animationCurve,
+      previousRouteAnimationCurve: previousRouteAnimationCurve,
+      duration: duration,
+      settings: settings,
+      transitionBackgroundColor: transitionBackgroundColor ?? Colors.black,
+      filterQuality: filterQuality,
+    ),
   );
   return result;
 }
@@ -128,6 +131,8 @@ class CupertinoModalBottomSheetRoute<T> extends ModalBottomSheetRoute<T> {
   // Background color behind all routes
   // Black by default
   final Color? transitionBackgroundColor;
+
+  final FilterQuality? filterQuality;
 
   CupertinoModalBottomSheetRoute({
     required WidgetBuilder builder,
@@ -151,6 +156,7 @@ class CupertinoModalBottomSheetRoute<T> extends ModalBottomSheetRoute<T> {
     this.transitionBackgroundColor,
     this.topRadius = _kDefaultTopRadius,
     this.previousRouteAnimationCurve,
+    this.filterQuality,
   }) : super(
           closeProgressThreshold: closeProgressThreshold,
           scrollController: scrollController,
@@ -179,11 +185,13 @@ class CupertinoModalBottomSheetRoute<T> extends ModalBottomSheetRoute<T> {
     final distanceWithScale = (paddingTop + _kPreviousPageVisibleOffset) * 0.9;
     final offsetY = secondaryAnimation.value * (paddingTop - distanceWithScale);
     final scale = 1 - secondaryAnimation.value / 10;
+
     return AnimatedBuilder(
       builder: (context, child) => Transform.translate(
+        filterQuality: filterQuality,
         offset: Offset(0, offsetY),
         child: Transform.scale(
-          filterQuality: FilterQuality.low,
+          filterQuality: filterQuality,
           scale: scale,
           child: child,
           alignment: Alignment.topCenter,
@@ -202,6 +210,7 @@ class CupertinoModalBottomSheetRoute<T> extends ModalBottomSheetRoute<T> {
       animationCurve: previousRouteAnimationCurve,
       topRadius: topRadius,
       backgroundColor: transitionBackgroundColor ?? Colors.black,
+      filterQuality: filterQuality,
     );
   }
 }
@@ -212,6 +221,7 @@ class _CupertinoModalTransition extends StatelessWidget {
   final Curve? animationCurve;
   final Color backgroundColor;
   final BoxShadow? boxShadow;
+  final FilterQuality? filterQuality;
 
   final Widget body;
 
@@ -223,6 +233,7 @@ class _CupertinoModalTransition extends StatelessWidget {
     this.backgroundColor = Colors.black,
     this.animationCurve,
     this.boxShadow,
+    this.filterQuality,
   }) : super(key: key);
 
   @override
@@ -249,13 +260,15 @@ class _CupertinoModalTransition extends StatelessWidget {
           final yOffset = progress * paddingTop;
           final scale = 1 - progress / 10;
           final radius = progress == 0 ? 0.0 : (1 - progress) * startRoundCorner + progress * topRadius.x;
+
           return Stack(
             children: <Widget>[
               Container(color: backgroundColor),
               Transform.translate(
+                filterQuality: filterQuality,
                 offset: Offset(0, yOffset),
                 child: Transform.scale(
-                  filterQuality: FilterQuality.low,
+                  filterQuality: filterQuality,
                   scale: scale,
                   alignment: Alignment.topCenter,
                   child: ClipRRect(
@@ -301,12 +314,14 @@ class CupertinoScaffold extends StatefulWidget {
   final Widget body;
   final Radius topRadius;
   final Color transitionBackgroundColor;
+  final FilterQuality? filterQuality;
 
   const CupertinoScaffold({
     Key? key,
     required this.body,
     this.topRadius = _kDefaultTopRadius,
     this.transitionBackgroundColor = Colors.black,
+    this.filterQuality,
   }) : super(key: key);
 
   @override
@@ -328,6 +343,7 @@ class CupertinoScaffold extends StatefulWidget {
     Duration? duration,
     RouteSettings? settings,
     BoxShadow? shadow,
+    FilterQuality? filterQuality,
   }) async {
     assert(debugCheckHasMediaQuery(context));
     final isCupertinoApp = context.findAncestorWidgetOfExactType<CupertinoApp>() != null;
@@ -337,28 +353,33 @@ class CupertinoScaffold extends StatefulWidget {
       barrierLabel = MaterialLocalizations.of(context).modalBarrierDismissLabel;
     }
     final topRadius = CupertinoScaffold.of(context)!.topRadius;
-    final result = await Navigator.of(context, rootNavigator: useRootNavigator).push(CupertinoModalBottomSheetRoute<T>(
-      closeProgressThreshold: closeProgressThreshold,
-      builder: builder,
-      secondAnimationController: CupertinoScaffold.of(context)!.animation,
-      containerBuilder: (context, _, child) => _CupertinoBottomSheetContainer(
-        child: child,
-        backgroundColor: backgroundColor,
+
+    final result = await Navigator.of(context, rootNavigator: useRootNavigator).push(
+      CupertinoModalBottomSheetRoute<T>(
+        closeProgressThreshold: closeProgressThreshold,
+        builder: builder,
+        secondAnimationController: CupertinoScaffold.of(context)!.animation,
+        containerBuilder: (context, _, child) => _CupertinoBottomSheetContainer(
+          child: child,
+          backgroundColor: backgroundColor,
+          topRadius: topRadius ?? _kDefaultTopRadius,
+          shadow: shadow,
+        ),
+        expanded: expand,
+        barrierLabel: barrierLabel,
+        bounce: bounce,
+        isDismissible: isDismissible ?? expand == false ? true : false,
+        modalBarrierColor: barrierColor ?? Colors.black12,
+        enableDrag: enableDrag,
         topRadius: topRadius ?? _kDefaultTopRadius,
-        shadow: shadow,
+        animationCurve: animationCurve,
+        previousRouteAnimationCurve: previousRouteAnimationCurve,
+        duration: duration,
+        settings: settings,
+        filterQuality: filterQuality,
       ),
-      expanded: expand,
-      barrierLabel: barrierLabel,
-      bounce: bounce,
-      isDismissible: isDismissible ?? expand == false ? true : false,
-      modalBarrierColor: barrierColor ?? Colors.black12,
-      enableDrag: enableDrag,
-      topRadius: topRadius ?? _kDefaultTopRadius,
-      animationCurve: animationCurve,
-      previousRouteAnimationCurve: previousRouteAnimationCurve,
-      duration: duration,
-      settings: settings,
-    ));
+    );
+
     return result;
   }
 }
@@ -389,6 +410,7 @@ class _CupertinoScaffoldState extends State<CupertinoScaffold> with TickerProvid
         body: widget.body,
         topRadius: widget.topRadius,
         backgroundColor: widget.transitionBackgroundColor,
+        filterQuality: widget.filterQuality,
       ),
     );
   }
