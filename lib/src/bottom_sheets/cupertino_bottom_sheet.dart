@@ -41,14 +41,17 @@ class _CupertinoBottomSheetContainer extends StatelessWidget {
     final topPadding = _kPreviousPageVisibleOffset + topSafeAreaPadding;
 
     final _shadow = shadow ?? _kDefaultBoxShadow;
-    BoxShadow(blurRadius: 10, color: Colors.black12, spreadRadius: 5);
     final _backgroundColor = backgroundColor ?? CupertinoTheme.of(context).scaffoldBackgroundColor;
+
     return Padding(
       padding: EdgeInsets.only(top: topPadding),
       child: ClipRRect(
         borderRadius: BorderRadius.vertical(top: topRadius),
         child: Container(
-          decoration: BoxDecoration(color: _backgroundColor, boxShadow: [_shadow]),
+          decoration: BoxDecoration(
+            color: _backgroundColor,
+            boxShadow: [_shadow],
+          ),
           width: double.infinity,
           child: MediaQuery.removePadding(
             context: context,
@@ -191,16 +194,17 @@ class CupertinoModalBottomSheetRoute<T> extends ModalBottomSheetRoute<T> {
     final offsetY = secondaryAnimation.value * (paddingTop - distanceWithScale);
     final scale = 1 - secondaryAnimation.value / 10;
 
+    final transform = Matrix4.translationValues(0, offsetY, 0.0);
+    final scaleMatrix = transform
+      ..storage[0] *= scale
+      ..storage[5] *= scale;
+
     return AnimatedBuilder(
-      builder: (context, child) => Transform.translate(
+      builder: (context, child) => Transform(
+        transform: scaleMatrix,
         filterQuality: filterQuality,
-        offset: Offset(0, offsetY),
-        child: Transform.scale(
-          filterQuality: filterQuality,
-          scale: scale,
-          child: child,
-          alignment: Alignment.topCenter,
-        ),
+        child: child,
+        alignment: Alignment.topCenter,
       ),
       child: child,
       animation: secondaryAnimation,
@@ -266,24 +270,44 @@ class _CupertinoModalTransition extends StatelessWidget {
           final scale = 1 - progress / 10;
           final radius = progress == 0 ? 0.0 : (1 - progress) * startRoundCorner + progress * topRadius.x;
 
+          final transform = Matrix4.translationValues(0, yOffset, 0.0);
+          final scaleMatrix = transform
+            ..storage[0] *= scale
+            ..storage[5] *= scale;
+
           return Stack(
             children: <Widget>[
               Container(color: backgroundColor),
-              Transform.translate(
+              Transform(
                 filterQuality: filterQuality,
-                offset: Offset(0, yOffset),
-                child: Transform.scale(
-                  filterQuality: filterQuality,
-                  scale: scale,
-                  alignment: Alignment.topCenter,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(radius),
-                    child: child,
-                  ),
+                transform: scaleMatrix,
+                alignment: Alignment.topCenter,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(radius),
+                  child: child,
                 ),
               ),
             ],
           );
+
+          // return Stack(
+          //   children: <Widget>[
+          //     Container(color: backgroundColor),
+          //     Transform.translate(
+          //       filterQuality: filterQuality,
+          //       offset: Offset(0, yOffset),
+          //       child: Transform.scale(
+          //         filterQuality: filterQuality,
+          //         scale: scale,
+          //         alignment: Alignment.topCenter,
+          //         child: ClipRRect(
+          //           borderRadius: BorderRadius.circular(radius),
+          //           child: child,
+          //         ),
+          //       ),
+          //     ),
+          //   ],
+          // );
         },
       ),
     );
